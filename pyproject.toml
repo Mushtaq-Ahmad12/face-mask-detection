@@ -1,0 +1,9 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "face-mask-detection"
+version = "0.1.0"
+description = "Face mask detection using Deep Learning and CNNs"
+requires-python = ">=3.10"

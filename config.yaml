@@ -1,0 +1,32 @@
+model:
+  name: "resnet152"
+  pretrained: true
+  freeze_layers: true
+  unfreeze_blocks: 1
+  image_width: 224
+  image_height: 224
+  channels: 3
+  model_save_path: "models/mask_detector.h5"
+
+training:
+  batch_size: 16
+  epochs: 1
+  learning_rate: 0.001
+  device: "cpu"
+  subset_fraction: 1
+  use_class_weights: true
+  class_counts:
+    with_mask: 3725
+    without_mask: 3828
+
+data:
+  raw_dir: "data/raw"
+  processed_dir: "data/processed"
+  train_dir: "data/processed/train"
+  val_dir: "data/processed/val"
+  # test_dir: "data/processed/test"
+  image_size: 224
+  categories: ["with_mask", "without_mask"]
+
+mlflow:
+  experiment_name: "face_mask_detection"

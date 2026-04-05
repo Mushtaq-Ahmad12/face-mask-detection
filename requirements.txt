@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+tensorflow>=2.10.0
+opencv-python
+numpy
+pillow
+pytest
+pyyaml
+pydantic
+python-multipart
+jinja2
+mlflow
+scikit-learn
+matplotlib
+seaborn
