@@ -1,9 +1,9 @@
 import os
 import tensorflow as tf
 
-def train_model(model, train_data, val_data, epochs=10, save_path="models/mask_detector.h5"):
+def train_model(model, train_data, val_data, epochs=10, save_path="models/mask_detector.h5", class_weight=None):
     """
-    Trains the model with early stopping, model checkpointing, and learning rate reduction.
+    Trains the model with callbacks and balance support.
     """
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     
@@ -16,7 +16,7 @@ def train_model(model, train_data, val_data, epochs=10, save_path="models/mask_d
         ),
         tf.keras.callbacks.EarlyStopping(
             monitor="val_loss",
-            patience=15, # Increased to prevent Epoch 7 stop
+            patience=15, # Prevent early stop on epoch 7
             restore_best_weights=True,
             verbose=1
         ),
@@ -34,7 +34,8 @@ def train_model(model, train_data, val_data, epochs=10, save_path="models/mask_d
         train_data,
         validation_data=val_data,
         epochs=epochs,
-        callbacks=callbacks
+        callbacks=callbacks,
+        class_weight=class_weight # Added for imbalance handling
     )
     
     return history

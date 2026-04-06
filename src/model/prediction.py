@@ -2,10 +2,12 @@ import numpy as np
 import cv2
 import tensorflow as tf
 
+from tensorflow.keras.applications.resnet50 import preprocess_input
+
 def preprocess_image(image: np.ndarray, target_size=(224, 224)) -> np.ndarray:
     """
     Preprocesses a raw numpy image array for the CNN model.
-    Resizes the image, converts to RGB if needed, scales to [0, 1], and adds a batch dimension.
+    Resizes the image and applies ResNet-specific preprocessing.
     """
     if len(image.shape) == 2: # Grayscale
         image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
@@ -16,8 +18,10 @@ def preprocess_image(image: np.ndarray, target_size=(224, 224)) -> np.ndarray:
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         
     image = cv2.resize(image, target_size)
-    image = image.astype(np.float32) / 255.0
-    image = np.expand_dims(image, axis=0) # Add batch dimension
+    image = image.astype(np.float32)
+    # Use standard ResNet preprocessing (critical for accuracy)
+    image = np.expand_dims(image, axis=0)
+    image = preprocess_input(image)
     
     return image
 

@@ -60,7 +60,27 @@ def train_pipeline():
         learning_rate=learning_rate
     )
     
-    history = train_model(model, train_gen, val_gen, epochs=epochs, save_path=save_path)
+    # Calculate Class Weights for imbalance (if enabled in config)
+    class_weights = None
+    if train_conf.get("use_class_weights", False):
+        from sklearn.utils import class_weight
+        labels = train_gen.classes
+        class_weights = class_weight.compute_class_weight(
+            class_weight='balanced',
+            classes=np.unique(labels),
+            y=labels
+        )
+        class_weights = dict(enumerate(class_weights))
+        print(f"Using class weights: {class_weights}")
+
+    history = train_model(
+        model, 
+        train_gen, 
+        val_gen, 
+        epochs=epochs, 
+        save_path=save_path,
+        class_weight=class_weights # Correctly passing config weights
+    )
     
     # Evaluation and plotting
     plot_training_history(history)
