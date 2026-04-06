@@ -4,6 +4,7 @@ from src.data.loader import get_data_generators
 from src.model.train import train_model
 from src.model.evaluation import evaluate_model, plot_training_history
 from src.utils import load_config
+import numpy as np
 
 def train_pipeline():
     print("Starting Model Training Pipeline...")
