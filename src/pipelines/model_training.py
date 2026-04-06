@@ -35,7 +35,7 @@ def train_pipeline():
         
     img_size = (model_conf.get("image_height", 224), model_conf.get("image_width", 224))
     batch_size = train_conf.get("batch_size", 32)
-    epochs = train_conf.get("epochs", 10)
+    epochs = train_conf.get("epochs", 50)
     save_path = model_conf.get("model_save_path", "models/mask_detector.h5")
     
     train_gen, val_gen = get_data_generators(raw_dir, img_size=img_size, batch_size=batch_size)
