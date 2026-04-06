@@ -1,6 +1,8 @@
 import tensorflow as tf
 import os
 
+from tensorflow.keras.applications.resnet50 import preprocess_input
+
 def get_data_generators(raw_dir, img_size=(224, 224), batch_size=32):
     # Detect number of classes on disk
     if os.path.exists(raw_dir):
@@ -12,17 +14,16 @@ def get_data_generators(raw_dir, img_size=(224, 224), batch_size=32):
     print(f"Data Loader detected {num_classes} folders: {subdirs if os.path.exists(raw_dir) else 'N/A'}")
     
     # Use categorical for any setup with > 2 folders or if multi-class output is intended
-    # Standard choice: binary for 2 folders, categorical for 3+
     class_mode = "categorical" if num_classes > 2 else "binary"
     
+    # Use standard ResNet preprocessing instead of manual 1/255 scaling
     datagen = tf.keras.preprocessing.image.ImageDataGenerator(
-        rescale=1./255,
+        preprocessing_function=preprocess_input,
         validation_split=0.2, # 20% validation split
-        rotation_range=20,
-        zoom_range=0.15,
+        rotation_range=30, # Increased augmentation for better generalization
+        zoom_range=0.2,
         width_shift_range=0.2,
         height_shift_range=0.2,
-        shear_range=0.15,
         horizontal_flip=True,
         fill_mode="nearest"
     )
