@@ -40,17 +40,29 @@ def train_pipeline():
     
     train_gen, val_gen = get_data_generators(raw_dir, img_size=img_size, batch_size=batch_size)
     
+    # Check classes
+    class_indices = train_gen.class_indices
+    num_detected_classes = len(class_indices)
+    print(f"--- Detected Classes: {class_indices} ({num_detected_classes} total) ---")
+    
+    # If binary classification (2 classes in filesystem), we typically output 1 sigmoid neuron
+    # If the user wants categorical (2 outputs), we can set this accordingly.
+    # Standard choice: binary_mode = 1 output neuron
+    model_num_classes = 1 if num_detected_classes == 2 else num_detected_classes
+
     model = build_resnet_model(
+        model_name=model_conf.get("name", "resnet50"),
         img_width=img_size[1], 
         img_height=img_size[0], 
-        channels=model_conf.get("channels", 3)
+        channels=model_conf.get("channels", 3),
+        num_classes=model_num_classes
     )
     
     history = train_model(model, train_gen, val_gen, epochs=epochs, save_path=save_path)
     
     # Evaluation and plotting
     plot_training_history(history)
-    evaluate_model(model, val_gen, class_names=data_conf.get("categories", ["with_mask", "without_mask"]))
+    evaluate_model(model, val_gen, class_names=list(class_indices.keys()))
     print("Pipeline completed successfully.")
 
 if __name__ == "__main__":
