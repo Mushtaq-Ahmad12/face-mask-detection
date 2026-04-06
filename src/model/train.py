@@ -16,7 +16,7 @@ def train_model(model, train_data, val_data, epochs=10, save_path="models/mask_d
         ),
         tf.keras.callbacks.EarlyStopping(
             monitor="val_loss",
-            patience=5,
+            patience=15, # Increased to prevent Epoch 7 stop
             restore_best_weights=True,
             verbose=1
         ),

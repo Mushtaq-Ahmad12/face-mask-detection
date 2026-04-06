@@ -49,13 +49,15 @@ def train_pipeline():
     # If the user wants categorical (2 outputs), we can set this accordingly.
     # Standard choice: binary_mode = 1 output neuron
     model_num_classes = 1 if num_detected_classes == 2 else num_detected_classes
+    learning_rate = train_conf.get("learning_rate", 0.0001)
 
     model = build_resnet_model(
         model_name=model_conf.get("name", "resnet50"),
         img_width=img_size[1], 
         img_height=img_size[0], 
         channels=model_conf.get("channels", 3),
-        num_classes=model_num_classes
+        num_classes=model_num_classes,
+        learning_rate=learning_rate
     )
     
     history = train_model(model, train_gen, val_gen, epochs=epochs, save_path=save_path)
