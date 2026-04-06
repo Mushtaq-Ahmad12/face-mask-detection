@@ -2,6 +2,19 @@ import tensorflow as tf
 import os
 
 def get_data_generators(raw_dir, img_size=(224, 224), batch_size=32):
+    # Detect number of classes on disk
+    if os.path.exists(raw_dir):
+        subdirs = [f for f in os.listdir(raw_dir) if os.path.isdir(os.path.join(raw_dir, f))]
+        num_classes = len(subdirs)
+    else:
+        num_classes = 2
+        
+    print(f"Data Loader detected {num_classes} folders: {subdirs if os.path.exists(raw_dir) else 'N/A'}")
+    
+    # Use categorical for any setup with > 2 folders or if multi-class output is intended
+    # Standard choice: binary for 2 folders, categorical for 3+
+    class_mode = "categorical" if num_classes > 2 else "binary"
+    
     datagen = tf.keras.preprocessing.image.ImageDataGenerator(
         rescale=1./255,
         validation_split=0.2, # 20% validation split
@@ -19,17 +32,17 @@ def get_data_generators(raw_dir, img_size=(224, 224), batch_size=32):
         raw_dir,
         target_size=img_size,
         batch_size=batch_size,
-        class_mode="binary",
+        class_mode=class_mode,
         subset="training",
         shuffle=True
     )
     
-    # Validation Generator - do not shuffle so evaluation metric indexing works
+    # Validation Generator
     val_generator = datagen.flow_from_directory(
         raw_dir,
         target_size=img_size,
         batch_size=batch_size,
-        class_mode="binary",
+        class_mode=class_mode,
         subset="validation",
         shuffle=False
     )

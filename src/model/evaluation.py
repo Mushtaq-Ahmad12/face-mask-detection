@@ -42,7 +42,16 @@ def evaluate_model(model, val_data, class_names=['with_mask', 'without_mask'], s
     
     y_true = val_data.classes
     y_pred_probs = model.predict(val_data)
-    y_pred = (y_pred_probs > 0.5).astype(int).flatten()
+    
+    # Check if binary (1 output neuron) or multi-class (multiple output neurons)
+    if y_pred_probs.shape[-1] == 1:
+        # Binary Classification
+        y_pred = (y_pred_probs > 0.5).astype(int).flatten()
+        y_pred_for_roc = y_pred_probs
+    else:
+        # Multi-class Classification
+        y_pred = np.argmax(y_pred_probs, axis=1)
+        y_pred_for_roc = y_pred_probs # Will use probability of the positive class or handle separately
     
     # Output Classification Report
     print("Classification Report:")
