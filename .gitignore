@@ -6,6 +6,7 @@ venv/
 .venv/
 env/
 .pytest_cache/
+.venv311/
 
 # Data and models
 data/raw/*

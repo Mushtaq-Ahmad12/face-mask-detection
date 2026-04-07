@@ -1,8 +1,6 @@
 model:
-  name: "resnet152"
+  name: "resnet50"           # "resnet50" or "resnet152"
   pretrained: true
-  freeze_layers: true
-  unfreeze_blocks: 1
   image_width: 224
   image_height: 224
   channels: 3
@@ -10,11 +8,13 @@ model:
 
 training:
   batch_size: 32
-  epochs: 50
-  learning_rate: 0.0001
-  device: "gpu"
-  subset_fraction: 1
-  use_class_weights: true
+  epochs: 30                 # Phase 1: head-only training (frozen base)
+  finetune_epochs: 20        # Phase 2: fine-tuning unfrozen top layers
+  learning_rate: 0.001       # Phase 1 LR (higher — head starts from scratch)
+  finetune_lr: 0.00001       # Phase 2 LR (MUST be very small to avoid forgetting)
+  unfreeze_layers: 20        # How many top base layers to unfreeze in Phase 2
+  device: "cpu"              # "cpu" or "gpu"
+  use_class_weights: true    # Handles imbalanced datasets automatically
   class_counts:
     with_mask: 3725
     without_mask: 3828
@@ -24,7 +24,6 @@ data:
   processed_dir: "data/processed"
   train_dir: "data/processed/train"
   val_dir: "data/processed/val"
-  # test_dir: "data/processed/test"
   image_size: 224
   categories: ["with_mask", "without_mask"]
 
