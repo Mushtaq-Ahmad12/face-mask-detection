@@ -16,11 +16,11 @@ def get_data_generators(raw_dir, img_size=(224, 224), batch_size=32):
     # Use categorical for any setup with > 2 folders or if multi-class output is intended
     class_mode = "categorical" if num_classes > 2 else "binary"
     
-    # Use standard ResNet preprocessing instead of manual 1/255 scaling
-    datagen = tf.keras.preprocessing.image.ImageDataGenerator(
+    # Generator for training data with augmentation
+    train_datagen = tf.keras.preprocessing.image.ImageDataGenerator(
         preprocessing_function=preprocess_input,
-        validation_split=0.2, # 20% validation split
-        rotation_range=30, # Increased augmentation for better generalization
+        validation_split=0.2, # Still use 20% validation split
+        rotation_range=30,
         zoom_range=0.2,
         width_shift_range=0.2,
         height_shift_range=0.2,
@@ -28,8 +28,14 @@ def get_data_generators(raw_dir, img_size=(224, 224), batch_size=32):
         fill_mode="nearest"
     )
     
+    # Generator for validation data without ANY augmentation (crucial!)
+    val_datagen = tf.keras.preprocessing.image.ImageDataGenerator(
+        preprocessing_function=preprocess_input,
+        validation_split=0.2
+    )
+    
     # Train Generator
-    train_generator = datagen.flow_from_directory(
+    train_generator = train_datagen.flow_from_directory(
         raw_dir,
         target_size=img_size,
         batch_size=batch_size,
@@ -38,8 +44,8 @@ def get_data_generators(raw_dir, img_size=(224, 224), batch_size=32):
         shuffle=True
     )
     
-    # Validation Generator
-    val_generator = datagen.flow_from_directory(
+    # Validation Generator (from val_datagen, SUBSET 'validation')
+    val_generator = val_datagen.flow_from_directory(
         raw_dir,
         target_size=img_size,
         batch_size=batch_size,

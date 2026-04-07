@@ -11,16 +11,21 @@ def build_resnet_model(model_name="resnet50", img_width=224, img_height=224, cha
         from tensorflow.keras.applications import ResNet50
         base_model = ResNet50(weights='imagenet', include_top=False, input_shape=(img_height, img_width, channels))
     
-    # UNFREEZE: Allow the model to learn from your specific data
-    # We unfreeze the top layers only for fine-tuning
+    # UNFREEZE Strategy: Only unfreeze the top blocks for specialized features
     base_model.trainable = True
-    for layer in base_model.layers[:-15]: # Keep first layers frozen, unfreeze last 15
+    for layer in base_model.layers[:-10]: # Freeze almost everything except last 2-3 blocks
         layer.trainable = False
-
+    
+    from tensorflow.keras.regularizers import l2
+    
     x = base_model.output
     x = GlobalAveragePooling2D()(x)
-    x = Dense(256, activation='relu')(x) # Increased capacity
+    
+    # Fully connected head with Regularization
+    x = Dense(512, activation='relu', kernel_regularizer=l2(0.001))(x) 
     x = Dropout(0.5)(x)
+    x = Dense(128, activation='relu', kernel_regularizer=l2(0.001))(x)
+    x = Dropout(0.3)(x)
     
     # Classification head
     if num_classes == 1:
