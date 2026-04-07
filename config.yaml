@@ -13,7 +13,7 @@ training:
   learning_rate: 0.001       # Phase 1 LR (higher — head starts from scratch)
   finetune_lr: 0.00001       # Phase 2 LR (MUST be very small to avoid forgetting)
   unfreeze_layers: 20        # How many top base layers to unfreeze in Phase 2
-  device: "cpu"              # "cpu" or "gpu"
+  device: "auto"              # "auto", "cpu", or "gpu"
   use_class_weights: true    # Handles imbalanced datasets automatically
   class_counts:
     with_mask: 3725
