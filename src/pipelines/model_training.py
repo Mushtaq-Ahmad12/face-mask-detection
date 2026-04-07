@@ -7,6 +7,7 @@ from src.data.loader import get_data_generators
 from src.model.train import train_model, finetune_model
 from src.model.evaluation import evaluate_model, plot_training_history
 from src.utils import load_config
+from src.hardware import configure_hardware, get_optimal_batch_size
 
 
 def train_pipeline():
@@ -20,18 +21,9 @@ def train_pipeline():
     train_conf  = config.get("training", {})
     data_conf   = config.get("data", {})
 
-    # ── 2. Configure Hardware ────────────────────────────────────
-    device_opt = train_conf.get("device", "cpu").lower()
-    if device_opt == "cpu":
-        print("⚙  Forcing CPU execution...")
-        tf.config.set_visible_devices([], 'GPU')
-    else:
-        gpus = tf.config.list_physical_devices('GPU')
-        if gpus:
-            print(f"⚙  GPU detected: {len(gpus)} device(s)")
-            tf.config.set_visible_devices(gpus, 'GPU')
-        else:
-            print("⚠  No GPU found — falling back to CPU.")
+    # ── 2. Configure Hardware (auto-detects CUDA GPU, falls back to CPU) ──
+    device_opt  = train_conf.get("device", "auto")
+    active_device = configure_hardware(device_opt)
 
     # ── 3. Validate Data ─────────────────────────────────────────
     raw_dir = data_conf.get("raw_dir", "data/raw")
@@ -41,7 +33,8 @@ def train_pipeline():
 
     # ── 4. Hyperparameters ───────────────────────────────────────
     img_size        = (model_conf.get("image_height", 224), model_conf.get("image_width", 224))
-    batch_size      = train_conf.get("batch_size", 32)
+    base_batch      = train_conf.get("batch_size", 32)
+    batch_size      = get_optimal_batch_size(base_batch, active_device)  # auto-adjust for CPU/GPU
     phase1_epochs   = train_conf.get("epochs", 30)           # Head-only training
     phase2_epochs   = train_conf.get("finetune_epochs", 20)  # Fine-tuning
     learning_rate   = train_conf.get("learning_rate", 0.001)
@@ -52,7 +45,7 @@ def train_pipeline():
 
     print(f"📁 Data dir    : {raw_dir}")
     print(f"🖼  Image size  : {img_size}")
-    print(f"🔢 Batch size  : {batch_size}")
+    print(f"🔢 Batch size  : {batch_size} (device: {active_device})")
     print(f"🔁 Phase 1 eps : {phase1_epochs}  (LR={learning_rate})")
     print(f"🔁 Phase 2 eps : {phase2_epochs}  (LR={finetune_lr})\n")
 
