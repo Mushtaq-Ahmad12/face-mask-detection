@@ -8,8 +8,8 @@ model:
 
 training:
   batch_size: 32
-  epochs: 30                 # Phase 1: head-only training (frozen base)
-  finetune_epochs: 20        # Phase 2: fine-tuning unfrozen top layers
+  epochs: 10                 # Phase 1: head-only training (frozen base)
+  finetune_epochs: 10        # Phase 2: fine-tuning unfrozen top layers
   learning_rate: 0.001       # Phase 1 LR (higher — head starts from scratch)
   finetune_lr: 0.00001       # Phase 2 LR (MUST be very small to avoid forgetting)
   unfreeze_layers: 20        # How many top base layers to unfreeze in Phase 2
@@ -24,6 +24,7 @@ data:
   processed_dir: "data/processed"
   train_dir: "data/processed/train"
   val_dir: "data/processed/val"
+  test_dir: "data/processed/test"
   image_size: 224
   categories: ["with_mask", "without_mask"]
 

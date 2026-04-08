@@ -25,41 +25,50 @@ def train_pipeline():
     device_opt  = train_conf.get("device", "auto")
     active_device = configure_hardware(device_opt)
 
-    # ── 3. Validate Data ─────────────────────────────────────────
-    raw_dir = data_conf.get("raw_dir", "data/raw")
-    if not os.path.exists(raw_dir) or not os.listdir(raw_dir):
-        print(f"✗ No data found in '{raw_dir}'. Add your dataset and try again.")
-        return
+    # ── 3. Validate Data Paths ───────────────────────────────────
+    train_dir = data_conf.get("train_dir", "data/processed/train")
+    val_dir   = data_conf.get("val_dir", "data/processed/val")
+    test_dir  = data_conf.get("test_dir", "data/processed/test")
+    
+    for d in [train_dir, val_dir]:
+        if not os.path.exists(d) or not os.listdir(d):
+            print(f"✗ Data directory '{d}' is missing or empty. Run split_dataset first.")
+            return
 
     # ── 4. Hyperparameters ───────────────────────────────────────
     img_size        = (model_conf.get("image_height", 224), model_conf.get("image_width", 224))
     base_batch      = train_conf.get("batch_size", 32)
-    batch_size      = get_optimal_batch_size(base_batch, active_device)  # auto-adjust for CPU/GPU
-    phase1_epochs   = train_conf.get("epochs", 30)           # Head-only training
-    phase2_epochs   = train_conf.get("finetune_epochs", 20)  # Fine-tuning
+    batch_size      = get_optimal_batch_size(base_batch, active_device)
+    phase1_epochs   = train_conf.get("epochs", 30)
+    phase2_epochs   = train_conf.get("finetune_epochs", 20)
     learning_rate   = train_conf.get("learning_rate", 0.001)
     finetune_lr     = train_conf.get("finetune_lr", 1e-5)
     save_path       = model_conf.get("model_save_path", "models/mask_detector.h5")
     finetune_path   = save_path.replace(".h5", "_finetuned.h5")
     unfreeze_layers = train_conf.get("unfreeze_layers", 20)
 
-    print(f"📁 Data dir    : {raw_dir}")
+    print(f"📁 Train dir   : {train_dir}")
+    print(f"📁 Val dir     : {val_dir}")
+    print(f"📁 Test dir    : {test_dir}")
     print(f"🖼  Image size  : {img_size}")
-    print(f"🔢 Batch size  : {batch_size} (device: {active_device})")
-    print(f"🔁 Phase 1 eps : {phase1_epochs}  (LR={learning_rate})")
-    print(f"🔁 Phase 2 eps : {phase2_epochs}  (LR={finetune_lr})\n")
+    print(f"🔢 Batch size  : {batch_size} (device: {active_device})\n")
 
     # ── 5. Data Generators ───────────────────────────────────────
-    train_gen, val_gen = get_data_generators(raw_dir, img_size=img_size, batch_size=batch_size)
+    train_gen, val_gen, test_gen = get_data_generators(
+        train_dir, 
+        val_dir, 
+        test_dir   = test_dir, 
+        img_size   = img_size, 
+        batch_size = batch_size
+    )
 
-    class_indices       = train_gen.class_indices
+    class_indices = train_gen.class_indices
     num_detected_classes = len(class_indices)
     print(f"\n✔ Classes detected: {class_indices}")
 
-    # Binary → 1 sigmoid output | Multi-class → N softmax outputs
     model_num_classes = 1 if num_detected_classes == 2 else num_detected_classes
 
-    # ── 6. Class Weights (handles imbalanced datasets) ───────────
+    # ── 6. Class Weights ─────────────────────────────────────────
     class_weights = None
     if train_conf.get("use_class_weights", True):
         from sklearn.utils import class_weight as cw_utils
@@ -114,13 +123,15 @@ def train_pipeline():
 
     plot_training_history(history2, save_dir="docs/phase2")
 
-    # ── 10. Final Evaluation ─────────────────────────────────────
+    # ── 10. Final Evaluation on TEST set ─────────────────────────
     print("\n" + "="*60)
-    print("   FINAL MODEL EVALUATION")
+    print("   FINAL MODEL EVALUATION (ON TEST SET)")
     print("="*60)
+    
+    eval_gen = test_gen if test_gen is not None else val_gen
     evaluate_model(
         model,
-        val_gen,
+        eval_gen,
         class_names = list(class_indices.keys()),
         save_dir    = "docs/evaluation"
     )
