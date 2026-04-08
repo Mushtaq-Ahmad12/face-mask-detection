@@ -8,7 +8,7 @@ env/
 .pytest_cache/
 .venv311/
 
-# Data and models
+Data and models
 data/raw/*
 !data/raw/.keep
 data/processed/*

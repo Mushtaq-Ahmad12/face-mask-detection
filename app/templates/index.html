@@ -2,10 +2,107 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Face Mask Detector</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Mask Detector | AI Inference</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
-    <h1>Face Mask Detector API</h1>
-    <p>Use the /docs endpoint to access the Swagger UI.</p>
+    <div class="container">
+        <main class="card">
+            <h1>Face Mask AI</h1>
+            <p class="subtitle">Upload a photo to detect safety compliance</p>
+
+            <div class="upload-area" onclick="document.getElementById('file-input').click()">
+                <span class="upload-icon">📸</span>
+                <p>Click to select or drag photo here</p>
+                <input type="file" id="file-input" accept="image/*" onchange="handleFile(event)">
+            </div>
+
+            <div id="loading">
+                <div class="spinner"></div>
+                <p style="margin-top: 10px;">Analyzing features...</p>
+            </div>
+
+            <div id="results" class="results">
+                <img id="preview" src="" alt="Preview">
+                <div id="prediction-res">
+                    <span id="label-badge" class="prediction-badge"></span>
+                    <span id="confidence-val" class="confidence"></span>
+                </div>
+                <button class="btn" onclick="resetForm()" style="margin-top: 2rem; background: rgba(255,255,255,0.05); color: white;">Try Another</button>
+            </div>
+        </main>
+    </div>
+
+    <footer>
+        High-fidelity ResNet inference enabled
+    </footer>
+
+    <script>
+        async function handleFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('preview').src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+
+            // Prepare for upload
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // UI feedback
+            document.querySelector('.upload-area').style.display = 'none';
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+
+            try {
+                const response = await fetch('/api/v1/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayResult(data);
+                } else {
+                    alert('Error: ' + data.detail);
+                    resetForm();
+                }
+            } catch (error) {
+                alert('Connection failed');
+                resetForm();
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        function displayResult(data) {
+            const results = document.getElementById('results');
+            const badge = document.getElementById('label-badge');
+            const conf = document.getElementById('confidence-val');
+
+            results.style.display = 'block';
+            
+            const isMask = data.prediction === 'mask';
+            badge.textContent = isMask ? 'Compliant: Mask' : 'Warning: No Mask';
+            badge.className = 'prediction-badge ' + (isMask ? 'badge-mask' : 'badge-no_mask');
+            
+            const percentage = (data.confidence * 100).toFixed(1);
+            conf.innerHTML = `Confidence: ${percentage}% <br> <small style="opacity: 0.5">Primary Output: ${data.confidence.toFixed(4)}</small>`;
+        }
+
+        function resetForm() {
+            document.querySelector('.upload-area').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('file-input').value = '';
+        }
+    </script>
 </body>
 </html>

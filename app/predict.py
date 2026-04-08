@@ -20,13 +20,20 @@ async def predict_mask(file: UploadFile = File(...)):
         
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     img = cv2.resize(img, (224, 224))
-    img = np.expand_dims(img, axis=0) / 255.0
+    img = np.expand_dims(img, axis=0)
+
+    # Use ResNet-specific preprocessing
+    from tensorflow.keras.applications.resnet50 import preprocess_input
+    img = preprocess_input(img.astype(np.float32))
     
-    preds = model.predict(img)[0]
+    preds = model.predict(img, verbose=0)[0]
     score = float(preds[0])
-    label = "mask" if score > 0.5 else "no_mask"
+    
+    # Final flip: score > 0.5 is NO_MASK
+    label = "no_mask" if score > 0.5 else "mask"
+    confidence = score if label == "no_mask" else 1.0 - score
     
     return {
         "prediction": label,
-        "confidence": score if label == "mask" else 1.0 - score
+        "confidence": confidence
     }
